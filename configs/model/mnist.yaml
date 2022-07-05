@@ -9,3 +9,8 @@ net:
   lin2_size: 256
   lin3_size: 256
   output_size: 10
+
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 0.001
+  weight_decay: 0.01

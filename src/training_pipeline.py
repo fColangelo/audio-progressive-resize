@@ -11,7 +11,7 @@ from pytorch_lightning import (
     seed_everything,
 )
 from pytorch_lightning.loggers import LightningLoggerBase
-
+from src.datamodules.audio_datamodule import AudioTagDataModule
 from src import utils
 
 log = utils.get_logger(__name__)
@@ -33,16 +33,16 @@ def train(config: DictConfig) -> Optional[float]:
         seed_everything(config.seed, workers=True)
 
     # Convert relative ckpt path to absolute path if necessary
-    ckpt_path = config.trainer.get("resume_from_checkpoint")
-    if ckpt_path and not os.path.isabs(ckpt_path):
-        config.trainer.resume_from_checkpoint = os.path.join(
-            hydra.utils.get_original_cwd(), ckpt_path
-        )
+    #ckpt_path = config.trainer.get("resume_from_checkpoint")
+    #if ckpt_path and not os.path.isabs(ckpt_path):
+    #    config.trainer.resume_from_checkpoint = os.path.join(
+    #        hydra.utils.get_original_cwd(), ckpt_path
+    #    )
 
     # Init lightning datamodule
-    log.info(f"Instantiating datamodule <{config.datamodule._target_}>")
-    datamodule: LightningDataModule = hydra.utils.instantiate(config.datamodule)
-
+    log.info(f"Instantiating datamodule for Dataset <{config.datamodule.dataset}>")
+    datamodule: LightningDataModule = AudioTagDataModule(config)
+    #datamodule.setup() 
     # Init lightning model
     log.info(f"Instantiating model <{config.model._target_}>")
     model: LightningModule = hydra.utils.instantiate(config.model)
@@ -66,7 +66,8 @@ def train(config: DictConfig) -> Optional[float]:
     # Init lightning trainer
     log.info(f"Instantiating trainer <{config.trainer._target_}>")
     trainer: Trainer = hydra.utils.instantiate(
-        config.trainer, callbacks=callbacks, logger=logger, _convert_="partial"
+        config.trainer, callbacks=callbacks, logger=logger, _convert_="partial",
+        #TODO only for testing purposes, to be removed afterwards
     )
 
     # Send some parameters from config to all lightning loggers
@@ -81,9 +82,10 @@ def train(config: DictConfig) -> Optional[float]:
     )
 
     # Train the model
-    if config.get("train"):
-        log.info("Starting training!")
+    if config.get("progressive_training"):
+        log.info("  training!")
         trainer.fit(model=model, datamodule=datamodule)
+        
 
     # Get metric score for hyperparameter optimization
     optimized_metric = config.get("optimized_metric")
@@ -119,3 +121,5 @@ def train(config: DictConfig) -> Optional[float]:
 
     # Return metric score for hyperparameter optimization
     return score
+
+

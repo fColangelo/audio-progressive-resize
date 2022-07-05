@@ -1,5 +1,5 @@
 transform:
-    _target_: torchaudio.transforms.MelSpectrogram
+    #_target_: torchaudio.transforms.MelSpectrogram
     sample_rate: 32000
     n_fft: 1024
     win_length: 1024
@@ -10,3 +10,4 @@ transform:
     window_fn: 
         _target_: hydra.utils.get_method
         path: torch.hann_window
+    spec_time_steps: 300
